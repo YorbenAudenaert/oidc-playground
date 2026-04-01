@@ -2,9 +2,7 @@ package com.audenyo.oidcplayground.controller;
 
 import com.audenyo.oidcplayground.model.dto.UserInfoDto;
 import com.audenyo.oidcplayground.service.AuthenticationService;
-import com.audenyo.oidcplayground.service.RefreshTokenStorageService;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,14 +11,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HomeController {
 
     private final AuthenticationService authenticationService;
-    private final RefreshTokenStorageService refreshTokenStorageService;
 
     public HomeController(
-            AuthenticationService authenticationService,
-            RefreshTokenStorageService refreshTokenStorageService
+            AuthenticationService authenticationService
     ) {
         this.authenticationService = authenticationService;
-        this.refreshTokenStorageService = refreshTokenStorageService;
     }
 
     @GetMapping("/")
@@ -37,12 +32,6 @@ public class HomeController {
     public String userInfo(Authentication authentication, Model model) {
         UserInfoDto userInfo = authenticationService.extractUserInfo(authentication);
         model.addAttribute("userInfo", userInfo);
-
-        if (authentication != null && authentication.getPrincipal() instanceof OidcUser oidcUser) {
-            refreshTokenStorageService.findBySubject(oidcUser.getSubject())
-                    .ifPresent(token -> model.addAttribute("storedToken", token));
-        }
-
         return "user-info";
     }
 }

@@ -9,22 +9,15 @@ spring:
             client-id: ${CLIENT_ID}
             client-secret: ${CLIENT_SECRET}
             authorization-grant-type: authorization_code
-            scope: openid, profile, email, offline_access
+            scope: openid, profile, email
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
         provider:
           adfs:
             authorization-uri: ${ISSUER_URI}/oauth2/authorize
             token-uri: ${ISSUER_URI}/oauth2/token
             jwk-set-uri: ${ISSUER_URI}/discovery/keys
-            user-info-uri: ${ISSUER_URI}/adfs/userinfo
+            user-info-uri: ${ISSUER_URI}/userinfo
             user-name-attribute: sub
-  datasource:
-    url: jdbc:h2:mem:oidc-playground;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: true
   ssl:
     bundle:
       pem:
@@ -33,7 +26,10 @@ spring:
             certificate: classpath:certs/ca.cer
 
 server:
-  port: 9090
+  port: 9098
 
-adfs:
-  refresh-cron: "0 * * * * *"
+logging:
+  level:
+    com.audenyo.oidcplayground: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: TRACE
