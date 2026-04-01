@@ -2,63 +2,39 @@ package com.audenyo.oidcplayground.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
-import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
-import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
-import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
-import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.client.RestClient;
-
-import javax.net.ssl.SSLContext;
-import java.net.http.HttpClient;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient(
-            SSLContext adfsSSLContext) {
-        HttpClient httpClient = HttpClient.newBuilder()
-                .sslContext(adfsSSLContext)
-                .build();
-        RestClient restClient = RestClient.builder()
-                .requestFactory(new JdkClientHttpRequestFactory(httpClient))
-                .configureMessageConverters(converters -> converters.addCustomConverter(new OAuth2AccessTokenResponseHttpMessageConverter()))
-                .defaultStatusHandler(new OAuth2ErrorResponseErrorHandler())
-                .build();
-        RestClientAuthorizationCodeTokenResponseClient client =
-                new RestClientAuthorizationCodeTokenResponseClient();
-        client.setRestClient(restClient);
-        return client;
+    private final RefreshTokenCaptureHandler refreshTokenCaptureHandler;
+
+    public SecurityConfig(RefreshTokenCaptureHandler refreshTokenCaptureHandler) {
+        this.refreshTokenCaptureHandler = refreshTokenCaptureHandler;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient) {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/error").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .tokenEndpoint(token -> token.accessTokenResponseClient(accessTokenResponseClient))
-                        .defaultSuccessUrl("/user-info", true)
-                )
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/")
-                        .clearAuthentication(true)
-                        .invalidateHttpSession(true)
-                )
-                .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-                );
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/error").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .successHandler(refreshTokenCaptureHandler)
+            )
+            .logout(logout -> logout
+                .logoutSuccessUrl("/")
+                .clearAuthentication(true)
+                .invalidateHttpSession(true)
+            )
+            .headers(headers -> headers
+                .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+            );
         return http.build();
     }
 }
