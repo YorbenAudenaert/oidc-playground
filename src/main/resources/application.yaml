@@ -1,6 +1,12 @@
 spring:
   application:
     name: oidc-playground
+  datasource:
+    url: jdbc:h2:mem:oidcdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
   security:
     oauth2:
       client:
@@ -9,14 +15,19 @@ spring:
             client-id: ${CLIENT_ID}
             client-secret: ${CLIENT_SECRET}
             authorization-grant-type: authorization_code
-            scope: openid, profile, email
+            scope: openid, profile, email, offline_access
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          adfs-backend:
+            client-id: ${BACKEND_CLIENT_ID}
+            client-secret: ${BACKEND_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid
+            provider: adfs
         provider:
           adfs:
             authorization-uri: ${ISSUER_URI}/oauth2/authorize
             token-uri: ${ISSUER_URI}/oauth2/token
             jwk-set-uri: ${ISSUER_URI}/discovery/keys
-            user-info-uri: ${ISSUER_URI}/userinfo
             user-name-attribute: sub
   ssl:
     bundle:
@@ -24,6 +35,11 @@ spring:
         adfs:
           truststore:
             certificate: classpath:certs/ca.cer
+
+token-exchange:
+  cron: "0 * * * * *"
+  private-key-path: classpath:certs/backend.key
+  resource: ${TOKEN_EXCHANGE_RESOURCE}
 
 server:
   port: 9098

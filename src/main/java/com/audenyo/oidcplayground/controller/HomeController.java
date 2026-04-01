@@ -1,7 +1,9 @@
 package com.audenyo.oidcplayground.controller;
 
 import com.audenyo.oidcplayground.model.dto.UserInfoDto;
+import com.audenyo.oidcplayground.repository.KnownUserRepository;
 import com.audenyo.oidcplayground.service.AuthenticationService;
+import com.audenyo.oidcplayground.service.TokenExchangeScheduler;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,11 +13,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HomeController {
 
     private final AuthenticationService authenticationService;
+    private final KnownUserRepository knownUserRepository;
+    private final TokenExchangeScheduler tokenExchangeScheduler;
 
-    public HomeController(
-            AuthenticationService authenticationService
-    ) {
+    public HomeController(AuthenticationService authenticationService,
+                          KnownUserRepository knownUserRepository,
+                          TokenExchangeScheduler tokenExchangeScheduler) {
         this.authenticationService = authenticationService;
+        this.knownUserRepository = knownUserRepository;
+        this.tokenExchangeScheduler = tokenExchangeScheduler;
     }
 
     @GetMapping("/")
@@ -33,5 +39,12 @@ public class HomeController {
         UserInfoDto userInfo = authenticationService.extractUserInfo(authentication);
         model.addAttribute("userInfo", userInfo);
         return "user-info";
+    }
+
+    @GetMapping("/token-exchange")
+    public String tokenExchange(Model model) {
+        model.addAttribute("knownUsers", knownUserRepository.findAll());
+        model.addAttribute("results", tokenExchangeScheduler.getResults());
+        return "token-exchange";
     }
 }
