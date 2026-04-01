@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>User Info - OIDC Playground</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h1>User Info</h1>
+    <a href="/" class="btn btn-outline-secondary mb-4">Back</a>
+
+    <div th:if="${userInfo == null}" class="alert alert-warning">
+        No OIDC user info available.
+    </div>
+
+    <div th:if="${userInfo != null}">
+        <div class="card mb-4">
+            <div class="card-header">Summary</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Provider</dt>
+                    <dd class="col-sm-9" th:text="${userInfo.provider()}"></dd>
+                    <dt class="col-sm-3">Subject</dt>
+                    <dd class="col-sm-9" th:text="${userInfo.subject()}"></dd>
+                    <dt class="col-sm-3">Name</dt>
+                    <dd class="col-sm-9" th:text="${userInfo.fullName()}"></dd>
+                    <dt class="col-sm-3">Email</dt>
+                    <dd class="col-sm-9" th:text="${userInfo.email()}"></dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Stored Refresh Token</div>
+            <div class="card-body">
+                <div th:if="${storedToken == null}" class="text-muted fst-italic">
+                    No refresh token stored — ensure <code>offline_access</code> is granted in ADFS.
+                </div>
+                <div th:if="${storedToken != null}">
+                    <dl class="row">
+                        <dt class="col-sm-3">User ID</dt>
+                        <dd class="col-sm-9" th:text="${storedToken.userId}"></dd>
+                        <dt class="col-sm-3">Stored at</dt>
+                        <dd class="col-sm-9" th:text="${storedToken.storedAt}"></dd>
+                        <dt class="col-sm-3">Last used at</dt>
+                        <dd class="col-sm-9" th:text="${storedToken.lastUsedAt != null ? storedToken.lastUsedAt : '—'}"></dd>
+                        <dt class="col-sm-3">Last status</dt>
+                        <dd class="col-sm-9">
+                            <span th:if="${storedToken.lastRefreshStatus == 'OK'}"
+                                  class="badge text-bg-success" th:text="${storedToken.lastRefreshStatus}"></span>
+                            <span th:if="${storedToken.lastRefreshStatus != null and storedToken.lastRefreshStatus != 'OK'}"
+                                  class="badge text-bg-danger" th:text="${storedToken.lastRefreshStatus}"></span>
+                            <span th:if="${storedToken.lastRefreshStatus == null}">—</span>
+                        </dd>
+                        <dt class="col-sm-3">Token (truncated)</dt>
+                        <dd class="col-sm-9 font-monospace text-break"
+                            th:text="${#strings.substring(storedToken.refreshToken, 0, 60) + '…'}"></dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <button class="btn btn-link p-0 text-decoration-none text-reset fw-semibold"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#claimsCollapse"
+                        aria-expanded="false"
+                        aria-controls="claimsCollapse">
+                    All Claims
+                </button>
+            </div>
+            <div id="claimsCollapse" class="collapse">
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Claim</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="entry : ${userInfo.claims()}">
+                            <td th:text="${entry.key}"></td>
+                            <td th:text="${entry.value}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

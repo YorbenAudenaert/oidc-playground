@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: oidc-playground
+  security:
+    oauth2:
+      client:
+        registration:
+          adfs:
+            client-id: ${CLIENT_ID}
+            client-secret: ${CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            scope: openid, profile, email, offline_access
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          adfs:
+            authorization-uri: ${ISSUER_URI}/oauth2/authorize
+            token-uri: ${ISSUER_URI}/oauth2/token
+            jwk-set-uri: ${ISSUER_URI}/discovery/keys
+            user-info-uri: ${ISSUER_URI}/adfs/userinfo
+            user-name-attribute: sub
+  datasource:
+    url: jdbc:h2:mem:oidc-playground;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+  ssl:
+    bundle:
+      pem:
+        adfs:
+          truststore:
+            certificate: classpath:certs/ca.cer
+
+server:
+  port: 9090
+
+adfs:
+  refresh-cron: "0 * * * * *"
